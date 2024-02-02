@@ -1,0 +1,12 @@
+{
+	"scripts": {
+		"pretty": "npx prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx}\"",
+		"build": "npm run pretty && rollup -c",
+		"start": "npm run build && .\\src\\index.html"
+	},
+	"devDependencies": {
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-terser": "^0.4.4",
+		"prettier": "^3.2.4"
+	}
+}
