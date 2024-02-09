@@ -1,13 +1,14 @@
-import BorderProperties from "./grid/cell/border/border-properties";
-import LineDrawProperties from "./grid/cell/border/line-draw-properties";
-import CellDrawProperties from "./grid/cell/cell-draw-properties";
-import DrawProperties from "./grid/common/draw-properties";
-import Point from "./grid/common/point";
-import TextProperties from "./grid/common/text-porperties";
-import CellAnimation from "./grid/grid-animation/cell-animation";
-import GridEngine from "./grid/grid-engine";
-import GridEngineOptions from "./grid/grid-engine-options";
-import Navigate from "./grid/grid-navigate/navigate";
+import BorderProperties from "../src/grid/cell/border/border-properties";
+import LineDrawProperties from "../src/grid/cell/border/line-draw-properties";
+import CellDrawProperties from "../src/grid/cell/cell-draw-properties";
+import DrawProperties from "../src/grid/common/draw-properties";
+import Point from "../src/grid/common/point";
+import TextProperties from "../src/grid/common/text-porperties";
+import GridEngine from "../src/grid/grid-engine";
+import GridEngineOptions from "../src/grid/grid-engine-options";
+import CellAnimation from "../src/modules/grid-animation/src/cell-animation";
+import Navigate from "../src/modules/grid-navigate/src/navigate";
+import Rect from "./grid/common/rect";
 
 //let infiniteGrid = null;
 let gridEngine = null;
@@ -24,7 +25,7 @@ window.addEventListener("load", () => {
   const knownCells = [];
   knownCells.push(
     new CellDrawProperties(
-      new Point(3, 3),
+      new Point(7, 7),
       new Point(0, 0),
       new BorderProperties(new LineDrawProperties(0, "red", 2)),
       new DrawProperties(0, "green"),
@@ -38,16 +39,18 @@ window.addEventListener("load", () => {
     knownCells,
     new GridEngineOptions(
       new Point(0, 0),
-      false,
-      new Point(10, 10),
-      null,
       true,
+      null,
+      new Rect(100, 100),
+      null,
     ),
   );
   gridEngine.addCellClickedListener(onCellClicked);
   //infiniteGrid = new InfiniteGrid(document.getElementById('gridCanvas'), {onCellClicked});
   //gridEngine.navigate = Navigate;
+  const nav = new Navigate(gridEngine);
   //gridEngine.cellAnimation = CellAnimation;
+  const animation = new CellAnimation(gridEngine);
   gridEngine.drawGrid();
   // todo - add to gridEngine
 });

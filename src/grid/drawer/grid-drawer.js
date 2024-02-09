@@ -4,9 +4,20 @@ import LineDrawer from "./line-drawer";
 import CellDrawer from "./cell-drawer";
 import CellDrawProperties from "../cell/cell-draw-properties";
 import CellLocation from "../cell/cell-location";
+import DictionaryArrayMap from "../../common/dictionary-array-map";
 
 export default class GridDrawer {
-  #cellAnimation = null;
+  #isDrawingKnownCells = true;
+  /** @property {DictionaryArrayMap} events container */
+  #events = null;
+  static onDraw = {
+    name: "onDraw",
+    types: {
+      drawStarted: "started",
+      drawKnownCell: "cell",
+      drawCompleted: "completed",
+    },
+  };
   /**
    * Grid Drawer - call after window load event
    * @param {CanvasRenderingContext2D} context the canvas context
@@ -15,14 +26,17 @@ export default class GridDrawer {
   constructor(context, options = GridDrawerOptions.defaultOptions) {
     this.context = context;
     this.options = options;
+    this.#events = new DictionaryArrayMap();
+    this.#isDrawingKnownCells = true;
   }
 
   /**
-   * @param {CellAnimation} cellAnimationModule
+   * @param {boolean} value Set to false if you do not want this instanse to draw knownCells
    */
-  set cellAnimation(cellAnimationModule) {
-    this.#cellAnimation = new cellAnimationModule(this.context);
+  set isDrawingKnwonCells(value) {
+    this.#isDrawingKnownCells = value;
   }
+
   // goToCell(cell) {
   // 	this.offsetX = cell.x - Math.floor((this.canvasElem.width/this.cellSize)/2);
   // 	this.offsetY = cell.y - Math.floor((this.canvasElem.height/this.cellSize)/2);
@@ -40,12 +54,7 @@ export default class GridDrawer {
     const dimensions = this.options.gridSize;
     const cellSize = this.options.cellSize;
 
-    if (this.#cellAnimation) {
-      await this.#cellAnimation.clearAnimation(
-        dimensions.width,
-        dimensions.height,
-      );
-    }
+    await this.#callOnDrawEvent(GridDrawer.onDraw.types.drawStarted);
 
     this.context.clearRect(0, 0, dimensions.width, dimensions.height);
 
@@ -70,33 +79,56 @@ export default class GridDrawer {
         new Point(dimensions.width, 0),
       );
     }
-    this.drawKnownCells(knownCells, gridOffset);
+    await Promise.all(this.drawKnownCells(knownCells, gridOffset));
+    this.#callOnDrawEvent(GridDrawer.onDraw.types.drawCompleted);
   }
 
   drawKnownCells(knownCells, gridOffset) {
-    for (const cell of knownCells) {
-      const cellLocation = new CellLocation(
-        cell,
+    const result = [];
+    for (const knownCell of knownCells) {
+      const cellToDraw = new CellLocation(
+        knownCell,
         gridOffset,
         this.options.cellSize,
       );
-      if (!cellLocation.isVisibleOnGrid(this.options.gridSize)) {
+      if (!cellToDraw.isVisibleOnGrid(this.options.gridSize)) {
         continue;
       }
-      if (this.#cellAnimation) {
-        const fromCell = new CellLocation(
-          CellDrawProperties.defaultInstance,
-          gridOffset,
-          this.options.cellSize,
-        );
-        fromCell.location = cellLocation.location;
-        fromCell.cellProperties.x = cellLocation.cellProperties.x;
-        fromCell.cellProperties.y = cellLocation.cellProperties.y;
-        this.#cellAnimation.changeToCell(fromCell, cellLocation, 1000);
-      } else {
-        const cellDrawer = new CellDrawer(this.context, cellLocation);
+      if (this.#isDrawingKnownCells) {
+        const cellDrawer = new CellDrawer(this.context, cellToDraw);
       }
+      result.push(
+        this.#callOnDrawEvent(
+          GridDrawer.onDraw.types.drawKnownCell,
+          cellToDraw,
+        ),
+      );
     }
+    return result;
+  }
+
+  /**
+   *
+   * @param {Function} onDrawFunc is callback async function that would be called on special draw events. the function must be async or return a promise
+   */
+  addOnDrawEvent(onDrawFunc) {
+    if (typeof onDrawFunc !== "function")
+      throw new Error(
+        "the parameter of addOnDrawEvent must be a function (async function ot that return a Promise",
+      );
+    if (onDrawFunc.constructor.name !== "AsyncFunction")
+      console.warn(
+        "make sure onDrawFunc is an async function or return a Promise",
+      );
+
+    this.#events.appendOrSet(GridDrawer.onDraw.name, onDrawFunc);
+  }
+
+  async #callOnDrawEvent(action, info) {
+    const onDrawEvents = this.#events.getSafe(GridDrawer.onDraw.name);
+    await Promise.all(
+      onDrawEvents.map((fnListener) => fnListener({ action, info })),
+    );
   }
 
   // #getLastCellOnScreen() {
