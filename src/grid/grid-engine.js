@@ -11,7 +11,6 @@ export default class GridEngine {
   static #eventsNames = { cellClick: "cellClick" };
   #events = new DictionaryArrayMap();
   #gridDrawer = null;
-  #navigate = null;
   /**
    * Grid engine - call after window load event
    * @param {HTMLElement} canvasElem
@@ -44,23 +43,17 @@ export default class GridEngine {
   }
 
   /**
-   * @param {typeof import("./grid-navigate/navigate").default} navigateModule
-   */
-  set navigate(navigateModule) {
-    // TODO:
-    // do not allow scroll & zoom when fix size and fit to screen
-    // options can adujst canvasSize by fitToScreenHorizen(/Vertical)
-    this.#navigate = new navigateModule(this.canvasElem, {
-      onScroll: this.addOffset.bind(this),
-      onZoom: this.zoom.bind(this),
-    });
-  }
-
-  /**
    * @param {typeof import("./grid-animation/cell-animation").default} cellAnimationModule
    */
   set cellAnimation(cellAnimationModule) {
     this.#gridDrawer.cellAnimation = cellAnimationModule;
+  }
+
+  /**
+   * @returns {GridDrawer} the grid drawer instance
+   */
+  get gridDrawer() {
+    return this.#gridDrawer;
   }
 
   drawGrid() {
@@ -106,6 +99,7 @@ export default class GridEngine {
         this.canvasSize.height / this.gridEngineOptions.maxCells.y,
       );
     }
+    return this.gridEngineOptions.cellSize;
   }
 
   #protectCellSize() {
