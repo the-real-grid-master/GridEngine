@@ -1,12 +1,42 @@
 {
-	"scripts": {
-		"pretty": "npx prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx}\"",
-		"build": "npm run pretty && rollup -c",
-		"start": "npm run build && .\\src\\index.html"
-	},
-	"devDependencies": {
-		"@rollup/plugin-json": "^6.1.0",
-		"@rollup/plugin-terser": "^0.4.4",
-		"prettier": "^3.2.4"
-	}
+  "scripts": {
+    "pretty": "npx prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx}\"",
+    "build": "npm run pretty && rollup -c",
+    "start": "npm run build && .\\src\\index.html"
+  },
+  "name": "grid-master",
+  "version": "1.0.7",
+  "description": "An infinite growing canvas grid that renders smoothly no matter how big it gets",
+  "main": "output/grid.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-real-grid-master/GridEngine.git"
+  },
+  "keywords": [
+    "grid",
+    "game",
+    "tiles",
+    "tile",
+    "zoom",
+    "infinite",
+    "engine",
+    "cell",
+    "cells",
+    "sheet",
+    "game map",
+    "efficient"
+  ],
+  "author": "Ran Shaltiel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/the-real-grid-master/GridEngine/issues"
+  },
+  "homepage": "https://github.com/the-real-grid-master/GridEngine#readme",
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "prettier": "^3.2.5"
+  }
 }
