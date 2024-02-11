@@ -22,4 +22,13 @@ export default class Rect {
     this.width += number;
     this.height += number;
   }
+
+  /**
+   *
+   * @param {Rect} rect to add
+   */
+  devide(rect) {
+    this.width /= rect.width;
+    this.height /= rect.height;
+  }
 }

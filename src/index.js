@@ -34,17 +34,7 @@ window.addEventListener("load", () => {
   );
 
   let gridCanvas = document.getElementById("gridCanvas");
-  gridEngine = new GridEngine(
-    gridCanvas,
-    knownCells,
-    new GridEngineOptions(
-      new Point(0, 0),
-      true,
-      null,
-      new Rect(100, 100),
-      null,
-    ),
-  );
+  gridEngine = new GridEngine(gridCanvas, knownCells, new GridEngineOptions());
   gridEngine.addCellClickedListener(onCellClicked);
   //infiniteGrid = new InfiniteGrid(document.getElementById('gridCanvas'), {onCellClicked});
   //gridEngine.navigate = Navigate;

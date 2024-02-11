@@ -60,7 +60,7 @@ export default class CellAnimation {
       const fromCell = new CellLocation(
         CellDrawProperties.defaultInstance,
         this.gridEngine.gridEngineOptions.offset,
-        this.gridEngine.gridEngineOptions.cellSize,
+        this.gridEngine.cellSize,
       );
       const toCell = event.info;
       fromCell.location = toCell.location;

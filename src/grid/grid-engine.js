@@ -5,6 +5,7 @@ import LineDrawProperties from "./cell/border/line-draw-properties";
 import CellDrawProperties from "./cell/cell-draw-properties";
 import GridDrawer from "./drawer/grid-drawer";
 import GridDrawerOptions from "./drawer/grid-drawer-options";
+import GridSizeOptions from "./grid-size-options";
 import Rect from "./common/rect";
 
 export default class GridEngine {
@@ -28,25 +29,20 @@ export default class GridEngine {
     this.gridEngineOptions = gridEngineOptions;
     this.context = this.canvasElem.getContext("2d");
 
-    this.canvasSize = this.canvasElem.getBoundingClientRect();
-    const gridDrawOptions = GridDrawerOptions.defaultOptions;
-    gridDrawOptions.gridSize.width = this.canvasSize.width;
-    gridDrawOptions.gridSize.height = this.canvasSize.height;
-    gridDrawOptions.cellSize = this.#calcCellSize();
-
+    const { gridDimensions, cellSize } = this.#handleSize();
+    const gridDrawOptions = new GridDrawerOptions(gridDimensions, cellSize);
     this.#gridDrawer = new GridDrawer(this.context, gridDrawOptions);
-    // TODO: check all kind of cell sizes! infi, square, explicit etc///
-    // TODO: refactor all those size methods
-    this.setGridSize(gridDrawOptions.gridSize);
-    this.#setCellSize(gridEngineOptions, gridDrawOptions);
-    this.#calcCellSizeSquare(gridDrawOptions.cellSize);
+  }
+
+  get cellSize() {
+    return this.#gridDrawer.options.cellSize;
   }
 
   /**
-   * @param {typeof import("./grid-animation/cell-animation").default} cellAnimationModule
+   * @param {boolean} animationEnabled
    */
-  set cellAnimation(cellAnimationModule) {
-    this.#gridDrawer.cellAnimation = cellAnimationModule;
+  set cellAnimation(animationEnabled) {
+    this.#gridDrawer.cellAnimation = animationEnabled;
   }
 
   /**
@@ -58,12 +54,6 @@ export default class GridEngine {
 
   drawGrid() {
     this.#gridDrawer.draw(this.knownCells, this.gridEngineOptions.offset);
-  }
-
-  setGridSize(size) {
-    this.#gridDrawer.options.gridSize = size;
-    this.canvasElem.width = size.width;
-    this.canvasElem.height = size.height;
   }
 
   addCellClickedListener(func) {
@@ -81,7 +71,7 @@ export default class GridEngine {
   zoom(delta) {
     const cellSize = this.#gridDrawer.options.cellSize;
     cellSize.addScalar(-delta);
-    this.#protectCellSize();
+    this.#protectCellSize(cellSize);
     this.drawGrid();
   }
 
@@ -92,18 +82,60 @@ export default class GridEngine {
     this.#handleClickEvent(name);
   }
 
-  #calcCellSize() {
-    if (this.gridEngineOptions.isInfinity === false) {
-      return new Rect(
-        this.canvasSize.width / this.gridEngineOptions.maxCells.x,
-        this.canvasSize.height / this.gridEngineOptions.maxCells.y,
-      );
-    }
-    return this.gridEngineOptions.cellSize;
+  #handleSize() {
+    const gridDimensions = this.#getGridDimensions();
+    this.canvasElem.width = gridDimensions.width;
+    this.canvasElem.height = gridDimensions.height;
+    this.canvasSize = this.canvasElem.getBoundingClientRect();
+    const cellSize = this.#calcCellSize();
+    return { gridDimensions, cellSize };
   }
 
-  #protectCellSize() {
-    const cellSize = this.#gridDrawer.options.cellSize;
+  #getGridDimensions() {
+    switch (this.gridEngineOptions.gridSizeOptions.gridDimensions.type) {
+      case GridSizeOptions.gridDimensionsType.canvasSize:
+        const canvasSize = this.canvasElem.getBoundingClientRect();
+        return new Rect(canvasSize.width, canvasSize.height);
+      case GridSizeOptions.gridDimensionsType.windowSize:
+        return new Rect(window.innerWidth, window.innerHeight);
+      case GridSizeOptions.gridDimensionsType.fixed:
+        return this.gridEngineOptions.gridSizeOptions.gridDimensions.fixed;
+    }
+  }
+
+  #calcCellSizeByOptions() {
+    const gridSizeOptions = this.gridEngineOptions.gridSizeOptions;
+
+    switch (gridSizeOptions.cellSize.type) {
+      case GridSizeOptions.cellSizeType.fixed:
+        return new Rect(
+          this.canvasSize.width / gridSizeOptions.cellSize.fixed.width,
+          this.canvasSize.height / gridSizeOptions.cellSize.fixed.height,
+        );
+      case GridSizeOptions.cellSizeType.squareByHeight:
+        const height =
+          this.canvasSize.height /
+          gridSizeOptions.defaultCellsAmountOnCanvas.height;
+        return new Rect(height, height);
+      case GridSizeOptions.cellSizeType.squareByWidth:
+        const width =
+          this.canvasSize.width /
+          gridSizeOptions.defaultCellsAmountOnCanvas.width;
+        return new Rect(width, width);
+      default:
+        return this.canvasSize.devide(
+          gridSizeOptions.defaultCellsAmountOnCanvas,
+        );
+    }
+  }
+
+  #calcCellSize() {
+    const cellSize = this.#calcCellSizeByOptions();
+    this.#protectOffset(cellSize);
+    return cellSize;
+  }
+
+  #protectCellSize(cellSize) {
     if (cellSize.width < GridEngineOptions.minCellSize)
       cellSize.width = GridEngineOptions.minCellSize;
     if (cellSize.height < GridEngineOptions.minCellSize)
@@ -113,26 +145,6 @@ export default class GridEngine {
       cellSize.width = GridEngineOptions.maxCellSize;
     if (cellSize.height > GridEngineOptions.maxCellSize)
       cellSize.height = GridEngineOptions.maxCellSize;
-  }
-
-  #setCellSize(gridEngineOptions, gridDrawOptions) {
-    if (gridEngineOptions.cellSize === null) {
-      gridDrawOptions.cellSize.width =
-        this.canvasSize.width / this.gridEngineOptions.maxCells.x;
-      gridDrawOptions.cellSize.height =
-        this.canvasSize.height / this.gridEngineOptions.maxCells.y;
-    }
-  }
-
-  #calcCellSizeSquare(cellSize) {
-    if (this.gridEngineOptions.squareByWidth === null) return;
-
-    if (this.gridEngineOptions.squareByWidth === true) {
-      cellSize.height = cellSize.width;
-    } else {
-      cellSize.width = cellSize.height;
-    }
-    return cellSize;
   }
 
   #protectOffset() {
